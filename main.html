@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Fun GIS Mapping App</title>
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.22/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.22/"></script>
+    <style>
+      #viewDiv {
+        height: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/Graphic",
+        "esri/layers/GraphicsLayer",
+        "esri/symbols/PictureMarkerSymbol",
+        "esri/widgets/Popup",
+        "esri/geometry/Point",
+      ], function (
+        Map,
+        MapView,
+        Graphic,
+        GraphicsLayer,
+        PictureMarkerSymbol,
+        Popup,
+        Point
+      ) {
+        var map = new Map({
+          basemap: "streets",
+        });
+
+        var view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-122.4194, 37.7749], // San Francisco
+          zoom: 12,
+        });
+
+        var graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+
+        // Sample marker data
+        var markerData = [
+          {
+            name: "Park",
+            lat: 37.7759,
+            lon: -122.4125,
+            info: "Fun Fact: Great place for a picnic!",
+          },
+          {
+            name: "Restaurant",
+            lat: 37.7933,
+            lon: -122.4086,
+            info: "Fun Fact: Try their famous burger!",
+          },
+          {
+            name: "Landmark",
+            lat: 37.8065,
+            lon: -122.4054,
+            info: "Fun Fact: Historic site!",
+          },
+          // Add more marker data here...
+        ];
+
+        // Custom marker icons
+        var parkIcon = new PictureMarkerSymbol({
+          url: "park.png",
+          width: "40px",
+          height: "40px",
+        });
+
+        var restaurantIcon = new PictureMarkerSymbol({
+          url: "restaurant.png",
+          width: "40px",
+          height: "40px",
+        });
+
+        var landmarkIcon = new PictureMarkerSymbol({
+          url: "destination.png",
+          width: "40px",
+          height: "40px",
+        });
+
+        // Add markers to the map
+        markerData.forEach(function (marker) {
+          var point = new Point({
+            longitude: marker.lon,
+            latitude: marker.lat,
+          });
+          var icon;
+          if (marker.name === "Park") {
+            icon = parkIcon;
+          } else if (marker.name === "Restaurant") {
+            icon = restaurantIcon;
+          } else {
+            icon = landmarkIcon;
+          }
+
+          var graphic = new Graphic({
+            geometry: point,
+            symbol: icon,
+            attributes: marker,
+          });
+          graphicsLayer.add(graphic);
+
+          // Add popup on click
+          view.popup.on("trigger-action", function (event) {
+            if (event.action.id === "funFact") {
+              alert(marker.info);
+            }
+          });
+
+          graphic.popupTemplate = {
+            title: "{name}",
+            content: "{info}",
+            actions: [
+              {
+                id: "funFact",
+                title: "Fun Fact",
+              },
+            ],
+          };
+
+          // Animate the markers
+          view.on("click", function (event) {
+            if (graphic.geometry === event.mapPoint) {
+              graphic.symbol.angle += 360;
+              graphicsLayer.reorder(graphic, graphicsLayer.graphics.length - 1);
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
